@@ -1,8 +1,7 @@
 import ply.lex as lex
-from tokens import tokens
+from tokens import tokens, reserved
 
-#expresiones regulares
-t_ASSIGN = r'='
+# Expresiones regulares para tokens simples
 t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
@@ -11,26 +10,59 @@ t_EQ = r'=='
 t_NEQ = r'!='
 t_LT = r'<'
 t_GT = r'>'
-t_IF = r'if'
-t_THEN = r'then'
-t_ELSE = r'else'
-t_ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
-t_NUMBER = r'\d+(\.\d*)?'
-t_STRING = r'".*?"'
-#control de linea para que las ignore
+t_ASSIGN = r'='
+t_EQUALS = r'='
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+t_UNDERSCORE = r'_'  # Token para el guion bajo
+
+# Expresiones regulares con acciones
+def t_ID(t):
+    r'[a-zA-Z][a-zA-Z0-9]*'  # Ya no incluye el guion bajo
+    t.type = reserved.get(t.value, 'ID')
+    return t
+
+def t_NUMBER(t):
+    r'\d+(\.\d*)?'
+    t.value = float(t.value) if '.' in t.value else int(t.value)
+    return t
+
+def t_STRING(t):
+    r'"[^"]*"'
+    return t
+
+# Caracteres ignorados
 t_ignore = ' \t'
 
-# saltos de linea control
 def t_newline(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
+
 def t_error(t):
-    print(f"Carácter ilegal: {t.value[0]}")
+    print(f"Carácter ilegal: {t.value[0]} en la línea {t.lineno}")
     t.lexer.skip(1)
-    
+
+tokens_order = [
+    'UNDERSCORE',
+    'ID',
+    'NUMBER',
+    'STRING',
+    'EQ',
+    'NEQ',
+    'ASSIGN',
+    'PLUS',
+    'MINUS',
+    'TIMES',
+    'DIVIDE',
+    'LT',
+    'GT',
+    'LPAREN',
+    'RPAREN'
+]
+
+# Construir el lexer
 lexer = lex.lex()
 
-# obtener token con numero de linea
 def analyze_code(code):
     lexer.input(code)
     tokens_with_line = []
